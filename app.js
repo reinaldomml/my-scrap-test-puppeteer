@@ -1,4 +1,4 @@
-import { scrapUrl } from './scrap-books-robot.js'
+import { scrapRobot } from './scrap-robot.js'
 import chalk from 'chalk'
 
 import express from 'express'
@@ -17,4 +17,4 @@ app.listen(PORT, (err) => {
 })
 
 //Start the robot
-scrapUrl()
+scrapRobot()
