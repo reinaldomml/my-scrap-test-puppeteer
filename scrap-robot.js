@@ -26,22 +26,42 @@ async function searchForElements(page) {
     await page.type('#q', config.SEARCH_TERM)
     await page.click('.btn.btn-primary')
     await page.waitForNavigation({ waitUntil: 'networkidle0' })
+
+    //FIXME: Apagar isso depois
+    // Checando quantas páginas temos
+    //let pageCount = (await page.$$eval('ul.pagination li').length) - 2
 }
+
+//FIXME: Lógica para coletar quantas páginas existem
+async function getPageCount(page) {
+    let pageCount = (await page.$$eval('ul.pagination li').length) - 2
+    console.log(chalk.green(` ===== Encontramos: ${chalk.bold(pageCount)}  ===== `))
+    return pageCount
+}
+
+// const pageCount = page.$$eval('ul.pagination li').length - 2
+// const pageCount = await page.$$eval('ul.pagination li').length
+//await page.waitForNavigation({ waitUntil: 'networkidle0' })
 
 async function getAllUrlsPages(page) {
-    const urls = []
+    let urls = []
 
-    // Push current urls element from page
-    const hrefs = await page.waitForSelector('ul.pagination li')
-    // FIXME: Push all urls from page
-    // urls.push({ hrefs }.tostring())
+    for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+        await page.goto(config.URL + '?page_num=' + pageNum + '&q=' + config.SEARCH_TERM, {
+            waitUntil: 'networkidle0',
+        })
 
-    console.log(chalk.greenBright(hrefs))
+        console.log(
+            chalk.yellow(' ===== Acessando página ' + pageNum + ' e salvando dados...' + ' ====='),
+        )
 
-    // FIXME: Open new pages and push all new urls
+        urls.push({ url: page.url().toString() })
+        console.log(urls)
+    }
+    return urls
 }
 
-/* --- Start the robot --- */
+/* ------- Start the robot ------- */
 
 export async function scrapRobot() {
     /* then we can use the launch() method to create a browser instance: */
@@ -51,6 +71,9 @@ export async function scrapRobot() {
         defaultViewport: null,
         args: ['--start-maximized', '--disable-dev-shm-usage'],
     })
+
+    /* Definindo Array com URLs abertas no Browser, começando com 0 */
+    const page = (await browser.pages())[0]
 
     /* FIXME: Check this on the future */
     /* Use localhost and connect to execute Chrome away from our codebase */
@@ -67,23 +90,23 @@ export async function scrapRobot() {
     console.log(chalk.green(' ===== Abrindo browser ===== '))
     await delay(0)
 
-    console.log(chalk.green(' ===== Indo para a página -> ' + config.URL + '  ===== '))
+    console.log(chalk.green(` ===== Indo para a página: ${chalk.underline(config.URL)}  ===== `))
     await delay(0)
-
-    /* Definindo Array com URLs abertas no Browser, começando com 0 */
-    const page = (await browser.pages())[0]
 
     /* Acessando a página principal */
     await page.goto(config.URL)
 
     /* Run javascript inside the page */
-    console.log(chalk.yellow(' ===== Buscando novos elementos ===== '))
+    console.log(chalk.yellow(' ===== Buscando novos dados ===== '))
     await searchForElements(page)
     await delay(0)
 
     console.log(chalk.yellow(' ===== Recebendo novos links da busca ===== '))
+    await getPageCount(page)
     await getAllUrlsPages(page)
     await delay(0)
+
+    // TODO: Open new pages and push all new urls
 
     // const data = await page.evaluate(() => {
     //     const elements = document.querySelectorAll('tr.team')
@@ -97,8 +120,7 @@ export async function scrapRobot() {
     //     return data
     // })
 
-    /* Options */
     // console.log(data)
-    // console.log(chalk.blue(urls))
+
     await browser.close()
 }
