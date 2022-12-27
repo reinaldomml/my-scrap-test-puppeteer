@@ -1,8 +1,10 @@
 /*-----------------------
-# TODO: List of things to do:
+
+# TODO: List of things to do before DEPLOY:
 - [ ] Check: args: ['--no-sandbox', '--disable-setuid-sandbox']
 - [ ]  Proxy - [https://www.bestproxyreviews.com/proxies-for-puppeteer/](https://www.bestproxyreviews.com/proxies-for-puppeteer/)
 - [ ]  Install puppeteer-extra + stealth mode - Não perecer um BOT - [https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth](https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth)
+
 -----------------------*/
 
 import config from './config.js'
@@ -29,23 +31,36 @@ async function searchForElements(page) {
 
     //FIXME: Apagar isso depois
     // Checando quantas páginas temos
-    //let pageCount = (await page.$$eval('ul.pagination li').length) - 2
+    // let pageCount = (await page.$$eval('ul.pagination li').length) - 2
 }
 
-//FIXME: Lógica para coletar quantas páginas existem
+// Lógica para coletar quantas páginas existem
+
+let pageCount = 0
+
 async function getPageCount(page) {
-    let pageCount = (await page.$$eval('ul.pagination li').length) - 2
-    console.log(chalk.green(` ===== Encontramos: ${chalk.bold(pageCount)}  ===== `))
-    return pageCount
+    // let pageCount = await page.$$eval('ul.pagination li', (itemsPerPage) => {
+    //     return itemsPerPage.length - 1
+    // })
+    let itemsPerPage = await page.$$eval('ul.pagination li', (pageCount) => {
+        return pageCount.length - 1
+    })
+    console.log(chalk.green(` ===== Existem: ${chalk.red(itemsPerPage)} páginas ===== `))
+    return (pageCount = itemsPerPage)
 }
 
-// const pageCount = page.$$eval('ul.pagination li').length - 2
-// const pageCount = await page.$$eval('ul.pagination li').length
-//await page.waitForNavigation({ waitUntil: 'networkidle0' })
+//TODO: Testar essa lógica no futuro, coletar N de páginas
+// const lastPage = await page.$$eval(
+//     'div[class*="pager"] > a > span[class*="page-numbers"]',
+//     (spans) => {
+//         return spans[spans.length - 2].textContent
+//     },
+// )
+// console.log(lastPage)
 
 async function getAllUrlsPages(page) {
     let urls = []
-
+    // console.log(pageCount) ////////DEBUG
     for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
         await page.goto(config.URL + '?page_num=' + pageNum + '&q=' + config.SEARCH_TERM, {
             waitUntil: 'networkidle0',
@@ -75,7 +90,7 @@ export async function scrapRobot() {
     /* Definindo Array com URLs abertas no Browser, começando com 0 */
     const page = (await browser.pages())[0]
 
-    /* FIXME: Check this on the future */
+    /* TODO: Check this on the future */
     /* Use localhost and connect to execute Chrome away from our codebase */
 
     // const browser = new PuppeteerHelper(
@@ -101,13 +116,17 @@ export async function scrapRobot() {
     await searchForElements(page)
     await delay(0)
 
-    console.log(chalk.yellow(' ===== Recebendo novos links da busca ===== '))
+    console.log(chalk.yellow(' ===== Verificando quantas páginas disponíveis ===== '))
     await getPageCount(page)
+    await delay(0)
+
+    console.log(chalk.yellow(' ===== Recebendo novos links da busca ===== '))
     await getAllUrlsPages(page)
     await delay(0)
 
     // TODO: Open new pages and push all new urls
 
+    /* Referência */
     // const data = await page.evaluate(() => {
     //     const elements = document.querySelectorAll('tr.team')
     //     const data = []
