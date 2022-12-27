@@ -28,22 +28,16 @@ async function searchForElements(page) {
     await page.type('#q', config.SEARCH_TERM)
     await page.click('.btn.btn-primary')
     await page.waitForNavigation({ waitUntil: 'networkidle0' })
-
-    //FIXME: Apagar isso depois
-    // Checando quantas páginas temos
-    // let pageCount = (await page.$$eval('ul.pagination li').length) - 2
 }
 
 // Lógica para coletar quantas páginas existem
-
 let pageCount = 0
 
 async function getPageCount(page) {
-    // let pageCount = await page.$$eval('ul.pagination li', (itemsPerPage) => {
-    //     return itemsPerPage.length - 1
-    // })
     let itemsPerPage = await page.$$eval('ul.pagination li', (pageCount) => {
-        return pageCount.length - 1
+        if (pageCount.length < 1) {
+            return pageCount.length + 1
+        } else return pageCount.length - 1
     })
     console.log(chalk.green(` ===== Existem: ${chalk.red(itemsPerPage)} páginas ===== `))
     return (pageCount = itemsPerPage)
@@ -58,8 +52,10 @@ async function getPageCount(page) {
 // )
 // console.log(lastPage)
 
+// Lógica para coletar as URLs de cada página
+let urls = []
+
 async function getAllUrlsPages(page) {
-    let urls = []
     // console.log(pageCount) ////////DEBUG
     for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
         await page.goto(config.URL + '?page_num=' + pageNum + '&q=' + config.SEARCH_TERM, {
@@ -70,8 +66,10 @@ async function getAllUrlsPages(page) {
             chalk.yellow(' ===== Acessando página ' + pageNum + ' e salvando dados...' + ' ====='),
         )
 
-        urls.push({ url: page.url().toString() })
-        console.log(urls)
+        urls.push(page.url().toString())
+
+        // JSON.stringify(urls)
+        // console.log(urls) //DEBUG
     }
     return urls
 }
@@ -124,9 +122,54 @@ export async function scrapRobot() {
     await getAllUrlsPages(page)
     await delay(0)
 
-    // TODO: Open new pages and push all new urls
+    console.log(chalk.yellow(' ===== Coletando dados ===== '))
+    // await newFunction(page)
+    await delay(0)
 
-    /* Referência */
+    // TODO: Open new pages and push data from all new urls
+
+    let dataFromPages = []
+    let data = []
+
+    // console.log(chalk.bgRed(JSON.stringify(urls[1]))) // DEBUG
+    // console.log(chalk.bgYellow(JSON.stringify(urls.length))) // DEBUG
+
+    for (let i = 0; i < urls.length; i++) {
+        let url = urls[i]
+        console.log(`Coletando dados da url: ${chalk.underline(url)}`)
+        // console.log(urls[i]) // DEBUG
+        // console.log(url) // DEBUG
+
+        /* --- Lógica para coletar os dados de cada página --- */
+        await page.goto(url, { waitUntil: 'networkidle0' })
+        let data = await page.evaluate(() => {
+            const elements = document.querySelectorAll('tr.team')
+            let data = []
+            elements.forEach((e) => {
+                const teamName = e.querySelector('td.name').innerText
+                const wins = e.querySelector('td.wins').innerText
+                const loses = e.querySelector('td.losses').innerText
+                data.push({
+                    // id: Math.random().toString(16).slice(2),
+                    // date: new Date().toJSON().slice(0, 10).replace(/-/g, '/'),
+                    teamName,
+                    wins,
+                    loses,
+                }) // Id com timestamp
+            })
+            return Object.assign({}, data) // Retorna os dados coletados
+        })
+        dataFromPages.push(data)
+    }
+
+    console.log(chalk.green(' ===== Todos os dados coletados ✅  ===== '))
+    console.log(dataFromPages)
+    console.log('Total de ' + dataFromPages.length + ' dados coletados') // <- Continuar aqui, mostrar número CORRETO
+    await delay(0)
+
+    // console.log(data)
+
+    /* ----- Referência ----- */
     // const data = await page.evaluate(() => {
     //     const elements = document.querySelectorAll('tr.team')
     //     const data = []

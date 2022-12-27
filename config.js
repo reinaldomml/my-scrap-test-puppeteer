@@ -1,4 +1,4 @@
 export default {
     URL: 'http://www.scrapethissite.com/pages/forms/',
-    SEARCH_TERM: 'new', // Website to Scrap
+    SEARCH_TERM: 'new', // Website searching term
 }
