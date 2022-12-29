@@ -10,8 +10,12 @@
 import config from './config.js'
 import puppeteer from 'puppeteer'
 import chalk from 'chalk'
+import cron from 'node-cron'
+import ora from 'ora'
 
-// Simple Delay to continue the execution
+// TIP: To simplify the code, sometimes we need to create a new function
+
+// Simple time delay to continue the execution
 function delay(time) {
     return new Promise(function (resolve) {
         setTimeout(resolve, time)
@@ -22,15 +26,13 @@ async function searchForElements(page) {
     // Selectors for elements
     await page.waitForSelector('.form.form-inline')
 
-    // As vezes é necessário criar uma função externa
-
-    // Informações de busca
+    // Searching input
     await page.type('#q', config.SEARCH_TERM)
     await page.click('.btn.btn-primary')
     await page.waitForNavigation({ waitUntil: 'networkidle0' })
 }
 
-// Lógica para coletar quantas páginas existem
+// Logic to define how many pages exist after the search
 let pageCount = 0
 
 async function getPageCount(page) {
@@ -52,11 +54,10 @@ async function getPageCount(page) {
 // )
 // console.log(lastPage)
 
-// Lógica para coletar as URLs de cada página
+// Logic to generate urls
 let urls = []
 
 async function getAllUrlsPages(page) {
-    // console.log(pageCount) ////////DEBUG
     for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
         await page.goto(config.URL + '?page_num=' + pageNum + '&q=' + config.SEARCH_TERM, {
             waitUntil: 'networkidle0',
@@ -67,18 +68,14 @@ async function getAllUrlsPages(page) {
         )
 
         urls.push(page.url().toString())
-
-        // JSON.stringify(urls)
-        // console.log(urls) //DEBUG
     }
     return urls
 }
 
-/* ------- Start the robot ------- */
+/* -------------- Start the robot -------------- */
 
 export async function scrapRobot() {
     /* then we can use the launch() method to create a browser instance: */
-
     const browser = await puppeteer.launch({
         headless: true, // set it false to see chrome
         defaultViewport: null,
@@ -100,62 +97,80 @@ export async function scrapRobot() {
     //     }),
     // )
 
-    console.log(chalk.green(' ===== Abrindo browser ===== '))
-    await delay(1000)
+    // Launch a loading using ora package
+    const spinner = ora({
+        color: 'blue',
+        hideCursor: false,
+        interval: 80,
+    }).start()
+
+    console.log(chalk.green(' ===== Browser Opening... 🌍 ===== '))
+    spinner.succeed('Browser opened')
+    await delay(0)
 
     console.log(chalk.green(` ===== Indo para a página: ${chalk.underline(config.URL)}  ===== `))
-    await delay(1000)
+    spinner.info('Page opened')
+    await delay(0)
 
-    /* Acessando a página principal */
+    /* Accessing the main page */
     await page.goto(config.URL)
 
-    /* Run javascript inside the page */
     console.log(chalk.yellow(' ===== Buscando novos dados ===== '))
     await searchForElements(page)
-    await delay(1000)
+    spinner.info('Searching for elements')
+    await delay(0)
 
     console.log(chalk.yellow(' ===== Verificando quantas páginas disponíveis ===== '))
     await getPageCount(page)
-    await delay(1000)
+    spinner.info('Getting page count')
+    await delay(0)
 
     console.log(chalk.yellow(' ===== Recebendo novos links da busca ===== '))
     await getAllUrlsPages(page)
-    await delay(1000)
+    spinner.info('Getting all urls')
+    await delay(0)
 
     console.log(chalk.yellow(' ===== Coletando dados ===== '))
-    // await newFunction(page)
-    await delay(1000)
+    spinner.succeed('Collecting data')
+    // Create another fuction?
+    await delay(0)
 
     // Open new pages and push data from all new urls
 
-    let dataFromPages = []
+    let dataFromUrls = []
 
     for (let i = 0; i < urls.length; i++) {
         let url = urls[i]
         console.log(`Coletando dados da url: ${chalk.underline(url)}`)
 
-        /* --- Lógica para coletar os dados de cada página --- */
+        /* --- Logic to collect data for each url --- */
         await page.goto(url, { waitUntil: 'networkidle0' })
         let data = await page.evaluate(async () => {
             const root = Array.from(document.querySelectorAll('tr.team'))
             let elements = root.map((e) => ({
-                id: Math.random().toString(16).slice(2),
-                date: new Date().toJSON().slice(0, 10).replace(/-/g, '/'),
+                id:
+                    Date.now().toString(36) +
+                    Math.floor(Math.pow(10, 12) + Math.random() * 9 * Math.pow(10, 12)).toString(
+                        36,
+                    ),
+                date: new Date().toLocaleDateString(),
+                // Below data collected from the page in const root
                 teamName: e.querySelector('td.name').innerText,
                 wins: e.querySelector('td.wins').innerText,
                 loses: e.querySelector('td.losses').innerText,
             }))
-            return elements // Retorna os dados coletados
+            return elements // Return the data from page.evaluate
         })
-        dataFromPages.push(...data)
+        dataFromUrls.push(...data) // Push data from each page to dataFromUrls
     }
 
     console.log(chalk.green(' ===== Todos os dados coletados  ===== '))
-    console.log(dataFromPages)
+    console.log(dataFromUrls)
     console.log(
-        chalk.green(' ===== Total de ' + dataFromPages.length + ' ✅ dados coletados ===== '),
+        chalk.green(' ===== Total de ' + dataFromUrls.length + ' ✅ dados coletados ===== '),
     )
-    await delay(1000)
+    await delay(0)
 
     await browser.close()
+    console.log(chalk.red(' ===== Browser closed ❌ ===== '))
 }
