@@ -101,10 +101,10 @@ export async function scrapRobot() {
     // )
 
     console.log(chalk.green(' ===== Abrindo browser ===== '))
-    await delay(0)
+    await delay(1000)
 
     console.log(chalk.green(` ===== Indo para a página: ${chalk.underline(config.URL)}  ===== `))
-    await delay(0)
+    await delay(1000)
 
     /* Acessando a página principal */
     await page.goto(config.URL)
@@ -112,77 +112,50 @@ export async function scrapRobot() {
     /* Run javascript inside the page */
     console.log(chalk.yellow(' ===== Buscando novos dados ===== '))
     await searchForElements(page)
-    await delay(0)
+    await delay(1000)
 
     console.log(chalk.yellow(' ===== Verificando quantas páginas disponíveis ===== '))
     await getPageCount(page)
-    await delay(0)
+    await delay(1000)
 
     console.log(chalk.yellow(' ===== Recebendo novos links da busca ===== '))
     await getAllUrlsPages(page)
-    await delay(0)
+    await delay(1000)
 
     console.log(chalk.yellow(' ===== Coletando dados ===== '))
     // await newFunction(page)
-    await delay(0)
+    await delay(1000)
 
-    // TODO: Open new pages and push data from all new urls
+    // Open new pages and push data from all new urls
 
     let dataFromPages = []
-    let data = []
-
-    // console.log(chalk.bgRed(JSON.stringify(urls[1]))) // DEBUG
-    // console.log(chalk.bgYellow(JSON.stringify(urls.length))) // DEBUG
 
     for (let i = 0; i < urls.length; i++) {
         let url = urls[i]
         console.log(`Coletando dados da url: ${chalk.underline(url)}`)
-        // console.log(urls[i]) // DEBUG
-        // console.log(url) // DEBUG
 
         /* --- Lógica para coletar os dados de cada página --- */
         await page.goto(url, { waitUntil: 'networkidle0' })
-        let data = await page.evaluate(() => {
-            const elements = document.querySelectorAll('tr.team')
-            let data = []
-            elements.forEach((e) => {
-                const teamName = e.querySelector('td.name').innerText
-                const wins = e.querySelector('td.wins').innerText
-                const loses = e.querySelector('td.losses').innerText
-                data.push({
-                    // id: Math.random().toString(16).slice(2),
-                    // date: new Date().toJSON().slice(0, 10).replace(/-/g, '/'),
-                    teamName,
-                    wins,
-                    loses,
-                }) // Id com timestamp
-            })
-            return Object.assign({}, data) // Retorna os dados coletados
+        let data = await page.evaluate(async () => {
+            const root = Array.from(document.querySelectorAll('tr.team'))
+            let elements = root.map((e) => ({
+                id: Math.random().toString(16).slice(2),
+                date: new Date().toJSON().slice(0, 10).replace(/-/g, '/'),
+                teamName: e.querySelector('td.name').innerText,
+                wins: e.querySelector('td.wins').innerText,
+                loses: e.querySelector('td.losses').innerText,
+            }))
+            return elements // Retorna os dados coletados
         })
-        dataFromPages.push(data)
+        dataFromPages.push(...data)
     }
 
-    console.log(chalk.green(' ===== Todos os dados coletados ✅  ===== '))
+    console.log(chalk.green(' ===== Todos os dados coletados  ===== '))
     console.log(dataFromPages)
-    console.log('Total de ' + dataFromPages.length + ' dados coletados') // <- Continuar aqui, mostrar número CORRETO
-    await delay(0)
-
-    // console.log(data)
-
-    /* ----- Referência ----- */
-    // const data = await page.evaluate(() => {
-    //     const elements = document.querySelectorAll('tr.team')
-    //     const data = []
-    //     elements.forEach((e) => {
-    //         const teamName = e.querySelector('td.name').innerText
-    //         const wins = e.querySelector('td.wins').innerText
-    //         const loses = e.querySelector('td.losses').innerText
-    //         data.push({ teamName, wins, loses })
-    //     })
-    //     return data
-    // })
-
-    // console.log(data)
+    console.log(
+        chalk.green(' ===== Total de ' + dataFromPages.length + ' ✅ dados coletados ===== '),
+    )
+    await delay(1000)
 
     await browser.close()
 }
