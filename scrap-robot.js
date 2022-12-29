@@ -41,7 +41,7 @@ async function getPageCount(page) {
             return pageCount.length + 1
         } else return pageCount.length - 1
     })
-    console.log(chalk.green(` ===== Existem: ${chalk.red(itemsPerPage)} páginas ===== `))
+    console.log(chalk.green(`Existem: ${chalk.red(itemsPerPage)} páginas`))
     return (pageCount = itemsPerPage)
 }
 
@@ -63,9 +63,7 @@ async function getAllUrlsPages(page) {
             waitUntil: 'networkidle0',
         })
 
-        console.log(
-            chalk.yellow(' ===== Acessando página ' + pageNum + ' e salvando dados...' + ' ====='),
-        )
+        console.log(chalk.yellow('Acessando página ' + pageNum + ' e salvando dados...'))
 
         urls.push(page.url().toString())
     }
@@ -104,38 +102,38 @@ export async function scrapRobot() {
         interval: 80,
     }).start()
 
-    console.log(chalk.green(' ===== Browser Opening... 🌍 ===== '))
+    console.log(chalk.green('Browser Opening... 🌍'))
     spinner.succeed('Browser opened')
     await delay(0)
 
-    console.log(chalk.green(` ===== Indo para a página: ${chalk.underline(config.URL)}  ===== `))
+    console.log(chalk.green(`Indo para a página: ${chalk.underline(config.URL)} `))
     spinner.info('Page opened')
     await delay(0)
 
     /* Accessing the main page */
     await page.goto(config.URL)
 
-    console.log(chalk.yellow(' ===== Buscando novos dados ===== '))
+    console.log(chalk.yellow('Buscando novos dados'))
     await searchForElements(page)
     spinner.info('Searching for elements')
     await delay(0)
 
-    console.log(chalk.yellow(' ===== Verificando quantas páginas disponíveis ===== '))
+    console.log(chalk.yellow('Verificando quantas páginas disponíveis'))
     await getPageCount(page)
     spinner.info('Getting page count')
     await delay(0)
 
-    console.log(chalk.yellow(' ===== Recebendo novos links da busca ===== '))
+    console.log(chalk.yellow('Recebendo novos links da busca'))
     await getAllUrlsPages(page)
     spinner.info('Getting all urls')
     await delay(0)
 
-    console.log(chalk.yellow(' ===== Coletando dados ===== '))
+    console.log(chalk.yellow('Coletando dados'))
     spinner.succeed('Collecting data')
     // Create another fuction?
     await delay(0)
 
-    // Open new pages and push data from all new urls
+    // Opening each page and push data from all urls
 
     let dataFromUrls = []
 
@@ -164,13 +162,21 @@ export async function scrapRobot() {
         dataFromUrls.push(...data) // Push data from each page to dataFromUrls
     }
 
-    console.log(chalk.green(' ===== Todos os dados coletados  ===== '))
+    console.log(chalk.green('Todos os dados coletados '))
     console.log(dataFromUrls)
-    console.log(
-        chalk.green(' ===== Total de ' + dataFromUrls.length + ' ✅ dados coletados ===== '),
-    )
+    console.log(chalk.green('Total de ' + dataFromUrls.length + ' ✅ dados coletados'))
     await delay(0)
 
     await browser.close()
-    console.log(chalk.red(' ===== Browser closed ❌ ===== '))
+    console.log(chalk.red('Browser closed ❌'))
+
+    /* ---- Clean arrays for receive new data---- */
+    function resetArray() {
+        if (dataFromUrls.length > 0 || urls.length > 0) {
+            dataFromUrls = []
+            urls = []
+            spinner.succeed('Arrays checked and cleaned')
+        }
+    }
+    resetArray()
 }
