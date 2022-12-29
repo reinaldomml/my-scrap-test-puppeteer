@@ -1,6 +1,7 @@
 /*-----------------------
 
 # TODO: List of things to do before DEPLOY:
+- [ ] Make a error try, cath and throw
 - [ ] Check: args: ['--no-sandbox', '--disable-setuid-sandbox']
 - [ ]  Proxy - [https://www.bestproxyreviews.com/proxies-for-puppeteer/](https://www.bestproxyreviews.com/proxies-for-puppeteer/)
 - [ ]  Install puppeteer-extra + stealth mode - Não perecer um BOT - [https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth](https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth)

@@ -27,18 +27,15 @@ app.listen(PORT, (err) => {
 cron.schedule(
     '*/1 * * * *',
     function () {
-        console.log(chalk.yellow(' ===== Running Robot 🤖 + Cron Job ⌛ ===== '))
+        console.log(chalk.green('Running Robot 🤖 + Cron Job ⌛'))
         /* ---- Tasks ---- */
         //Start the robot 01
         scrapRobot()
         /* ---- End ---- */
         // Log the time
         console.log(
-            chalk.cyan(
-                ` ===== Task RUN in: ${chalk.underline(new Date().toLocaleString())} 🔄  ===== `,
-            ),
+            chalk.yellow(`Run task in: ${chalk.underline(new Date().toLocaleString())} 🔄 `),
         )
-        console.log(chalk.cyan(` ===== Next task in: ${chalk.underline('FALTA AQUI')} 🔄  ===== `))
     },
     {
         scheduled: true,
